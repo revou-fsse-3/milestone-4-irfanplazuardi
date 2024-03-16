@@ -90,23 +90,22 @@ def create_account():
 def update_account(id):
     account_type = request.form['account_type']
     account_number = request.form['account_number']
-    balcnce = request.form['balance']
+    balance = request.form['balance']
 
     connection = engine.connect()
     Session = sessionmaker(connection)
     session = Session()
 
     match_account = session.query(Account).filter(Account.id == id).first()
-    json_data = request.get_json()
 
     try:
         match_account.account_type = account_type
         match_account.account_number = account_number
-        match_account.balance = balcnce
+        match_account.balance = balance
 
         session.add(match_account)
         session.commit()
-        return jsonify({"message": "Success updating data"})
+        return jsonify({"message": "Success updating data"}), 201
     
     except Exception as e:
         session.rollback()

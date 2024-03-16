@@ -7,6 +7,8 @@ from flask_login import current_user, login_required
 
 transaction_routes = Blueprint('transaction_routes', __name__)
 
+Session = sessionmaker(bind=engine)
+
 @transaction_routes.route("/transactions", methods=['GET'])
 @login_required
 def get_transactions():
@@ -28,26 +30,20 @@ def get_transactions():
 
     return jsonify(response_data)
 
-@transaction_routes.route("/transactions/<id>", methods=['GET'])
+@transaction_routes.route("/transactions/<int:id>", methods=['GET'])
 @login_required
 def get_transaction_by_id(id):
-    response_data = dict()
-
-    connection = engine.connect()
-    Session = sessionmaker(connection)
-    session = Session()
-
     try:
-        transaction = session.query(Transaction).filter(Transaction.id == id).first()
-        if transaction is None:
-            return jsonify({"message": "Transaction not found"}), 404
-        response_data['transaction'] = transaction
-
+        session = Session()
+        account = session.query(Transaction).filter(Transaction.id == id).first()
+        if not account:
+            return jsonify({"message": "Account not found"}), 404
+        return jsonify({"account": account.serialize()})
     except Exception as e:
-        print(e)
-        return jsonify({"message": "Something went wrong when fetching transaction"}), 500
-
-    return jsonify(response_data)
+        print("An error occurred:", e)
+        return jsonify({"error": "Error Processing Data"}), 500
+    finally:
+        session.close()
 
 @transaction_routes.route("/transactions", methods=['POST'])
 @login_required
